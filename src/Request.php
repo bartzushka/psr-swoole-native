@@ -10,7 +10,7 @@ use Swoole\Http\Request as SwooleRequest;
 
 class Request implements RequestInterface
 {
-    private $headers = null;
+    private $headers;
 
     public function __construct(
         SwooleRequest $swooleRequest,
@@ -20,6 +20,7 @@ class Request implements RequestInterface
         $this->swooleRequest = $swooleRequest;
         $this->uriFactory = $uriFactory;
         $this->streamFactory = $streamFactory;
+        $this->headers = !empty($this->swooleRequest->header) ? $this->swooleRequest->header : [];
     }
 
     public function getRequestTarget()

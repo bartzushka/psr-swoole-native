@@ -1,31 +1,49 @@
 <?php
+
 namespace Imefisto\PsrSwoole;
 
-use Psr\Http\Message\StreamFactoryInterface;
-use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UploadedFileFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
-use Psr\Http\Message\UriInterface;
 use Swoole\Http\Request as SwooleRequest;
 
 class ServerRequest extends Request implements ServerRequestInterface
 {
-    public $attributes = [];
+    public array $attributes = [];
+    public array $serverParams;
+
 
     public function __construct(
-        SwooleRequest $swooleRequest,
-        UriFactoryInterface $uriFactory,
-        StreamFactoryInterface $streamFactory,
+        SwooleRequest                $swooleRequest,
+        UriFactoryInterface          $uriFactory,
+        StreamFactoryInterface       $streamFactory,
         UploadedFileFactoryInterface $uploadedFileFactory
-    ) {
+    )
+    {
         parent::__construct($swooleRequest, $uriFactory, $streamFactory);
         $this->uploadedFileFactory = $uploadedFileFactory;
+        $this->serverParams = $this->extractServerParams();
+    }
+
+    private function extractServerParams()
+    {
+        $res = [];
+        $server = $this->swooleRequest->server;
+        foreach ($server as $k => $v) {
+            $res[strtoupper($k)] = $v;
+        }
+        return $res;
     }
 
     public function getServerParams()
     {
-        return $_SERVER ?? [];
+        return $this->serverParams;
+    }
+
+    public function getHeader($name)
+    {
+        return parent::getHeader(strtolower($name));
     }
 
     public function getCookieParams()
@@ -85,7 +103,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         if (property_exists($this, 'parsedBody')) {
             return $this->parsedBody;
         }
-        
+
         if (!empty($this->swooleRequest->post)) {
             return $this->swooleRequest->post;
         }
