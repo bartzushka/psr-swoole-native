@@ -76,7 +76,7 @@ class Request implements RequestInterface
 
         $userInfo = $this->parseUserInfo() ?? null;
 
-        $uri = (!empty($userInfo) ? '//' . $userInfo . '@' : '')
+        $uri = (!empty($userInfo) ? '//' . $userInfo . '@' : '//')
             . $this->swooleRequest->header['host']
             . $this->getRequestTarget()
             ;
@@ -143,7 +143,7 @@ class Request implements RequestInterface
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -158,20 +158,19 @@ class Request implements RequestInterface
 
     public function getHeader($name)
     {
-        if (!$this->hasHeader($name)) {
-            return [];
-        }
-
-        foreach ($this->headers as $key => $value) {
-            if (strtolower($name) == strtolower($key)) {
-                return is_array($value)
-                    ? $value
-                    : [$value]
-                    ;
+        if ($this->hasHeader($name)) {
+            foreach ($this->headers as $key => $value) {
+                if (strtolower($name) == strtolower($key)) {
+                    return is_array($value)
+                        ? $value
+                        : [$value];
+                }
             }
         }
+
+        return [];
     }
-    
+
     public function getHeaderLine($name)
     {
         return \implode(',', $this->getHeader($name));
@@ -211,16 +210,14 @@ class Request implements RequestInterface
     {
         $new = clone $this;
 
-        if (!$new->hasHeader($name)) {
-            return $new;
-        }
-
-        foreach ($new->headers as $key => $value) {
-            if (strtolower($name) == $key) {
-                unset($new->headers[$key]);
-                return $new;
+        if ($new->hasHeader($name)) {
+            foreach ($new->headers as $key => $value) {
+                if (strtolower($name) == $key) {
+                    unset($new->headers[$key]);
+                }
             }
         }
+        return $new;
     }
 
     public function getBody()
